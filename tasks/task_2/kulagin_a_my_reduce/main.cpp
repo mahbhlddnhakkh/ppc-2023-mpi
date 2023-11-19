@@ -28,14 +28,24 @@ inline void test_vector_scalar() {
       sum_real += a[i] * b[i];
     }
   }
-  MPI_Bcast(&n, 1, mpi_vector_type, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
   n = n / proc_num;
   if (proc_rank != 0) {
     a = new vector_type[n];
     b = new vector_type[n];
   }
-  MPI_Scatter(a, n, mpi_vector_type, a, n, mpi_vector_type, 0, MPI_COMM_WORLD);
-  MPI_Scatter(b, n, mpi_vector_type, b, n, mpi_vector_type, 0, MPI_COMM_WORLD);
+  // weird fix for "Buffer parameters sendbuf and recvbuf must not be aliased" in MPI_Scatter.
+  if (proc_rank == 0) {
+    MPI_Scatter(a, n, mpi_vector_type, MPI_IN_PLACE, n, mpi_vector_type, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Scatter(NULL, n, mpi_vector_type, a, n, mpi_vector_type, 0, MPI_COMM_WORLD);
+  }
+  if (proc_rank == 0) {
+    MPI_Scatter(b, n, mpi_vector_type, MPI_IN_PLACE, n, mpi_vector_type, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Scatter(NULL, n, mpi_vector_type, b, n, mpi_vector_type, 0, MPI_COMM_WORLD);
+  }
+
   sum = sum_all = 0;
   for (i = 0; i < n; i++) {
     sum += a[i] * b[i];
@@ -48,6 +58,7 @@ inline void test_vector_scalar() {
   if (proc_rank == 0) {
     res_time[1] = MPI_Wtime();
     std::cout << "MPI_Reduce time = " << (res_time[1] - res_time[0]) << '\n';
+    EXPECT_EQ(sum_real, sum_all);
   }
   if (proc_rank == 0) {
     res_time[0] = MPI_Wtime();
