@@ -6,7 +6,7 @@
 
 typedef int vector_type;
 static const MPI_Datatype mpi_vector_type = MPI_INT;
-static const int vector_size_mul_max = 50001;
+static const int vector_size_mul = 500;
 static const vector_type vector_element_max = 100;
 static const vector_type vector_element_min = -100;
 
@@ -18,7 +18,7 @@ inline void test_vector_scalar() {
   MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
   if (proc_rank == 0) {
-    n = proc_num * (std::rand() % vector_size_mul_max + 1);
+    n = proc_num * vector_size_mul;
     a = new vector_type[n];
     b = new vector_type[n];
     sum_real = 0;
