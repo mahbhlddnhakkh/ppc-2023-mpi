@@ -60,6 +60,8 @@ inline void test_vector_scalar() {
     std::cout << "MPI_Reduce time = " << (res_time[1] - res_time[0]) << '\n';
     EXPECT_EQ(sum_real, sum_all);
   }
+  // make it different
+  sum_all = 0;
   if (proc_rank == 0) {
     res_time[0] = MPI_Wtime();
   }
@@ -73,6 +75,46 @@ inline void test_vector_scalar() {
   }
   delete[] a;
   delete[] b;
+}
+
+TEST(Parallel_Operation_Reduce_MPI, test_calc_tree_props) {
+  proc_tree_props props;
+  int n = 15;
+  int* path = new int[n];
+  int path_size;
+
+  calculate_tree_props(7, n, &props, path, &path_size);
+  EXPECT_EQ(-1, props.parent);
+  EXPECT_EQ(3, props.children[0]);
+  EXPECT_EQ(11, props.children[1]);
+  EXPECT_EQ(1, path_size);
+  if (path_size == 1) {
+    EXPECT_EQ(7, path[0]);
+  }
+
+  calculate_tree_props(9, n, &props, path, &path_size);
+  EXPECT_EQ(11, props.parent);
+  EXPECT_EQ(8, props.children[0]);
+  EXPECT_EQ(10, props.children[1]);
+  EXPECT_EQ(3, path_size);
+  if (path_size == 3) {
+    EXPECT_EQ(7, path[0]);
+    EXPECT_EQ(11, path[1]);
+    EXPECT_EQ(9, path[2]);
+  }
+
+  calculate_tree_props(2, n, &props, path, &path_size);
+  EXPECT_EQ(1, props.parent);
+  EXPECT_EQ(-1, props.children[0]);
+  EXPECT_EQ(-1, props.children[1]);
+  EXPECT_EQ(4, path_size);
+  if (path_size == 4) {
+    EXPECT_EQ(7, path[0]);
+    EXPECT_EQ(3, path[1]);
+    EXPECT_EQ(1, path[2]);
+    EXPECT_EQ(2, path[3]);
+  }
+  delete[] path;
 }
 
 TEST(Parallel_Operation_Reduce_MPI, test1_vector_scalar) {
